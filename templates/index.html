@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Main{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="console-window">
+        <div class="console-header">
+            <div class="console-dots">
+                <span class="dot dot-red"></span>
+                <span class="dot dot-yellow"></span>
+                <span class="dot dot-green"></span>
+            </div>
+            <span class="console-title"><span class="console-user">guest</span>@console-website:~</span>
+        </div>
+
+        <div class="console-body" id="consoleBody">
+            <div class="console-output" id="consoleOutput">
+                <div class="console-line">Welcome to Console Website! Type <span class="cmd-highlight">help</span> to see available commands.</div>
+            </div>
+            
+            <div class="console-input-line">
+                <span class="console-prompt">
+                    <span class="console-user">guest</span>@console-website:~$ 
+                </span>
+                <input type="text" id="consoleInput" class="console-input" autofocus autocomplete="off" spellcheck="false">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
