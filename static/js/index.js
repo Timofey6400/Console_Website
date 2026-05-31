@@ -10,13 +10,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const commandHistory = [];
     let historyIndex = -1;
 
-    // Объект интерфейса терминала
     const terminalInterface = {
         addLine: addLine,
         updatePromptName: updatePromptName,
         clearOutput: () => { consoleOutput.innerHTML = ''; },
             updatePromptPath: (path) => {
-        const pathLabels = document.querySelectorAll('.console-path'); // убедись, что в HTML у тильды ~ есть такой класс
+        const pathLabels = document.querySelectorAll('.console-path');
         pathLabels.forEach(el => el.textContent = path);
     }
     };
@@ -35,13 +34,11 @@ document.addEventListener('DOMContentLoaded', function () {
         consoleOutput.scrollTop = consoleOutput.scrollHeight;
     }
 
-    // Проверка сессии при загрузке страницы и цепочечный вызов пакетов
     fetch('/api/user-info/')
         .then(response => response.json())
         .then(data => {
             if (data.is_authenticated) {
                 updatePromptName(data.username);
-                // Загружаем пакеты только убедившись, что пользователь авторизован
                 loadUserPackages(terminalInterface);
             } else {
                 updatePromptName('guest');
@@ -49,9 +46,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(() => console.error('Ошибка проверки сессии пользователя.'));
 
-    // Единый обработчик логики команд
     function executeCommandLogic(commandName, args) {
-        // 1. Ищем в базовых командах системы (help, ls, cd, apt...)
         if (commands[commandName]) {
             const result = commands[commandName](args, terminalInterface);
             if (result === null) return;
@@ -62,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 addLine(result);
             }
         } 
-        // 2. Ищем в установленных через куды пакетах (cmatrix, neofetch...)
         else if (installedPackages.has(commandName)) {
             const result = runInstalledPackage(commandName, terminalInterface);
             if (result === null) return;
@@ -73,7 +67,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 addLine(result);
             }
         } 
-        // 3. Если команда не найдена вообще
         else {
             addLine('Command not found: ' + commandName, 'error');
         }
@@ -92,17 +85,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         commandHistory.push(trimmed);
         historyIndex = commandHistory.length;
-
         executeCommandLogic(commandName, args);
     }
 
-    // Слушатель для выполнения команд через sudo
     window.addEventListener('executeSubCommand', function(e) {
         const { command, args } = e.detail;
         executeCommandLogic(command, args);
     });
 
-    // Слушатели клавиатуры
     consoleInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
             const value = consoleInput.value;

@@ -47,7 +47,7 @@ nav a {
   padding: 20px;
 }
 
-/* ===== CONSOLE WINDOW ===== */
+/* CONSOLE WINDOW */
 .console-window {
   width: 900px;
   max-width: 95vw;
@@ -62,7 +62,6 @@ nav a {
   font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
 }
 
-/* -- Header bar (with dots) -- */
 .console-header {
   display: flex;
   align-items: center;
@@ -94,7 +93,6 @@ nav a {
   font-family: 'Courier New', monospace;
 }
 
-/* -- Console body (output + input) -- */
 .console-body {
   flex: 1;
   display: flex;
@@ -109,7 +107,6 @@ nav a {
   padding-bottom: 8px;
 }
 
-/* Scrollbar styling */
 .console-output::-webkit-scrollbar {
   width: 6px;
 }
@@ -150,7 +147,6 @@ nav a {
   color: #888;
 }
 
-/* -- Input line -- */
 .console-input-line {
   display: flex;
   align-items: center;

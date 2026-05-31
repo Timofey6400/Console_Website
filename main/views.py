@@ -67,7 +67,6 @@ def get_installed_packages(request):
     if not request.user.is_authenticated:
         return JsonResponse({'status': 'success', 'packages': []})
         
-    # Безопасное получение или создание профиля, если юзер старый
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     
     packages = json.loads(profile.installed_packages)
@@ -87,10 +86,7 @@ def install_package(request):
         
         if not package_name:
             return JsonResponse({'status': 'error', 'message': 'Package name is required'}, status=400)
-            
-        # Заменяем request.user.profile на безопасный get_or_create
         profile, created = UserProfile.objects.get_or_create(user=request.user)
-        
         packages = json.loads(profile.installed_packages)
         
         if package_name not in packages:

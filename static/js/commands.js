@@ -1,6 +1,5 @@
 import { getCookie, getCurrentUser } from './utils.js';
 
-// 1. Репозиторий утилит (исходный код программ)
 const packageRepository = {
     cmatrix: {
         description: 'Matrix digital rain effect',
@@ -14,25 +13,21 @@ const packageRepository = {
         description: 'Shows system information',
         run: (terminal) => {
             return [
-                '   .-\x1b[1;36m__\x1b[0m-.       \x1b[1;36mrylfi\x1b[0m@\x1b[1;36mconsole-website\x1b[0m',
-                '  /  \x1b[1;36m..\x1b[0m  \\      ---------------------',
-                '  |  \x1b[1;36m||\x1b[0m  |      \x1b[1;33mOS:\x1b[0m Custom Web OS v1.5',
-                '  \\  \x1b[1;36m--\x1b[0m  /      \x1b[1;33mKernel:\x1b[0m Django 5.0 + ES6',
-                '   \'-\x1b[1;36m__\x1b[0m-\'       \x1b[1;33mUptime:\x1b[0m ' + Math.floor(performance.now() / 1000) + 's',
-                '            \x1b[1;33mShell:\x1b[0m Custom JS Terminal',
-                '            \x1b[1;33mDisplay:\x1b[0m ' + window.innerWidth + 'x' + window.innerHeight,
-                '            \x1b[1;33mGPU:\x1b[0m NVIDIA RTX 3050 (ASUS TUF)',
-                '            \x1b[1;33mMemory:\x1b[0m 512MB / 16GB (Emulated)'
+                'neofetch 7.1.0',
+                'OS: Console Website v1.5',
+                'Kernel: JavaScript 1.0',
+                'Uptime: ' + new Date().toLocaleTimeString(),
+                'Packages: ' + installedPackages.size,
+                'Shell: Web Terminal',
             ];
         }
     }
 };
 
-// 2. Виртуальная файловая система
 const fileSystem = {
     '~': {
-        'about.txt': 'Console Website v1.5. Разработано на Django и JS.',
-        'contacts.txt': 'Email: rylfi@example.com\nGitHub: github.com/rylfi',
+        'about.txt': 'Console Website v1.5. Developed with Django and JS.',
+        'contacts.txt': 'Email: clashingtimarcoc@gmail.com\nGitHub: https://github.com/Timofey6400',
         'projects': {
             'terminal.js': '// Main terminal logic\nconsole.log("System active.");',
             'api.py': '# Django Rest API\nprint("Backend running")'
@@ -42,20 +37,25 @@ const fileSystem = {
 
 let currentDirectory = '~';
 
-// Сет, где хранятся имена УСТАНОВЛЕННЫХ пользователем утилит
+// !!!
 export const installedPackages = new Set();
 
-// Функция навигации по путям
 function getDir(path) {
     if (path === '~') return fileSystem['~'];
+    
     const parts = path.split('/');
-    if (parts[0] === '~' && parts[1] && fileSystem['~'][parts[1]]) {
-        return fileSystem['~'][parts[1]];
+    let current = fileSystem['~'];
+    
+    for (let i = 1; i < parts.length; i++) {
+        if (current[parts[i]] && typeof current[parts[i]] === 'object') {
+            current = current[parts[i]];
+        } else {
+            return fileSystem['~'];
+        }
     }
-    return fileSystem['~'];
+    return current;
 }
 
-// Запуск бинарников из репозитория (вызывается из index.js)
 export function runInstalledPackage(pkgName, terminal) {
     if (packageRepository[pkgName]) {
         return packageRepository[pkgName].run(terminal);
@@ -63,7 +63,7 @@ export function runInstalledPackage(pkgName, terminal) {
     return `E: Package ${pkgName} is corrupted.`;
 }
 
-// Загрузка пакетов из Django бэкенда
+// Downloading packages from Django Backend
 export function loadUserPackages(terminal) {
     const currentUser = getCurrentUser();
     if (currentUser === 'guest') {
@@ -78,14 +78,13 @@ export function loadUserPackages(terminal) {
                 installedPackages.clear();
                 data.packages.forEach(pkg => installedPackages.add(pkg));
                 if (terminal && data.packages.length > 0) {
-                    terminal.addLine(`[Cloud] Восстановлены пакеты профиля: ${data.packages.join(', ')}`, 'success');
+                    terminal.addLine(`[Cloud] Restored profile packages: ${data.packages.join(', ')}`, 'success');
                 }
             }
         })
-        .catch(() => console.log('Ошибка синхронизации пакетов с Django.'));
+        .catch(() => console.log('Error synchronizing packages with Django.'));
 }
 
-// 3. Основной объект базовых команд системы
 export const commands = {
     help: function() {
         return [
@@ -208,24 +207,29 @@ export const commands = {
         ).join('   ');
     },
 
-    cd: function(args, terminal) {
+cd: function(args, terminal) {
         const target = args[0];
         
         if (!target || target === '~' || target === '/') {
             currentDirectory = '~';
+            if (terminal.updatePromptPath) terminal.updatePromptPath('~');
             return null;
         }
 
         if (target === '..') {
             if (currentDirectory.includes('/')) {
+                currentDirectory = currentDirectory.substring(0, currentDirectory.lastIndexOf('/'));
+            } else {
                 currentDirectory = '~';
             }
+            if (terminal.updatePromptPath) terminal.updatePromptPath(currentDirectory);
             return null;
         }
 
         let currentDirContent = getDir(currentDirectory);
         if (currentDirContent[target] && typeof currentDirContent[target] === 'object') {
             currentDirectory = currentDirectory === '~' ? `~/${target}` : `${currentDirectory}/${target}`;
+            if (terminal.updatePromptPath) terminal.updatePromptPath(currentDirectory);
             return null;
         }
 
@@ -261,8 +265,6 @@ export const commands = {
             terminal.addLine(`[sudo] password for ${currentUser}: *******`, 'info');
             setTimeout(() => {
                 terminal.addLine('Access granted.', 'success');
-                
-                // Перенаправляем выполнение подкоманды в глобальный обработчик терминала через событие или прямой вызов
                 const event = new CustomEvent('executeSubCommand', { detail: { command: subCommand, args: subArgs } });
                 window.dispatchEvent(event);
             }, 800);
@@ -318,7 +320,6 @@ export const commands = {
     }
 };
 
-// 4. Эффект Матрицы
 function startCMatrix(terminal) {
     const canvas = document.createElement('canvas');
     canvas.id = 'matrixCanvas';

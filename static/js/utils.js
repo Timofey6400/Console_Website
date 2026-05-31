@@ -1,6 +1,4 @@
-// utils.js
 
-// Функция для получения CSRF-токена
 export function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -16,14 +14,12 @@ export function getCookie(name) {
     return cookieValue;
 }
 
-// Разбор флагов и параметров
 export function parseArgs(argsArray) {
     const flags = argsArray.filter(arg => arg.startsWith('-'));
     const params = argsArray.filter(arg => !arg.startsWith('-'));
     return { flags, params };
 }
 
-// Быстрое получение текущего юзера из DOM
 export function getCurrentUser() {
     const el = document.querySelector('.console-user');
     return el ? el.textContent : 'guest';
