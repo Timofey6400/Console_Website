@@ -1,11 +1,11 @@
+import json
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.models import User
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import logout
 from .models import UserProfile
-import json
+
 
 @csrf_exempt
 def register_user(request):
@@ -15,20 +15,25 @@ def register_user(request):
             username = data.get('username')
             password = data.get('password')
 
+            if not username or not password:
+                return JsonResponse({'status': 'error', 'message': 'Username and password required'}, status=400)
+
             if len(password) < 6:
                 return JsonResponse({'status': 'error', 'message': 'Password must be at least 6 characters'}, status=400)
 
             if User.objects.filter(username=username).exists():
                 return JsonResponse({'status': 'error', 'message': 'User already exists'}, status=400)
 
+            # Создаем пользователя. Сигнал post_save автоматически создаст связанный UserProfile
             user = User.objects.create_user(username=username, password=password)
-            UserProfile.objects.create(user=user)
             login(request, user)
             
             return JsonResponse({'status': 'success', 'username': user.username})
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            
     return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
 
 @csrf_exempt
 def login_user(request):
@@ -47,13 +52,16 @@ def login_user(request):
                 return JsonResponse({'status': 'error', 'message': 'Invalid username or password'}, status=401)
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            
     return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
 
 def get_user_info(request):
     return JsonResponse({
         'is_authenticated': request.user.is_authenticated,
         'username': request.user.username if request.user.is_authenticated else 'guest'
     })
+
 
 @csrf_exempt
 def logout_user(request):
@@ -62,6 +70,7 @@ def logout_user(request):
         return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error'}, status=405)
 
+
 def get_installed_packages(request):
     """Возвращает пакеты юзера. Если профиля нет — создаем его"""
     if not request.user.is_authenticated:
@@ -69,9 +78,11 @@ def get_installed_packages(request):
         
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     
-    packages = json.loads(profile.installed_packages)
-    return JsonResponse({'status': 'success', 'packages': packages})
+    # profile.installed_packages уже готовый list благодаря JSONField в Postgres
+    return JsonResponse({'status': 'success', 'packages': profile.installed_packages})
 
+
+@csrf_exempt
 def install_package(request):
     """Сохраняет пакет в БД с автоматическим созданием профиля для старых аккаунтов"""
     if request.method != 'POST':
@@ -86,20 +97,22 @@ def install_package(request):
         
         if not package_name:
             return JsonResponse({'status': 'error', 'message': 'Package name is required'}, status=400)
-        profile, created = UserProfile.objects.get_or_create(user=request.user)
-        packages = json.loads(profile.installed_packages)
-        
-        if package_name not in packages:
-            packages.append(package_name)
-            profile.installed_packages = json.dumps(packages)
-            profile.save()
             
-        return JsonResponse({'status': 'success', 'packages': packages})
+        profile, created = UserProfile.objects.get_or_create(user=request.user)
+        
+        # Работаем напрямую с питоновским списком
+        if package_name not in profile.installed_packages:
+            profile.installed_packages.append(package_name)
+            profile.save(update_fields=['installed_packages'])
+            
+        return JsonResponse({'status': 'success', 'packages': profile.installed_packages})
     except json.JSONDecodeError:
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON'}, status=400)
 
+
 def home(request):
     return render(request, 'index.html')
+
 
 def about(request):
     return render(request, 'about.html')

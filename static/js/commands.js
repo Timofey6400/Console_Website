@@ -1,6 +1,13 @@
 import { getCookie, getCurrentUser } from './utils.js';
 
 const packageRepository = {
+    opsec: {
+        description: 'Simulate operational security checks',
+        run: (terminal) => {
+            terminal.addLine('Running operational security checks...', 'info');
+            return null;
+        }
+    },
     cmatrix: {
         description: 'Matrix digital rain effect',
         run: (terminal) => {
@@ -96,11 +103,11 @@ export const commands = {
             '  whoami            - Show current user',
             '  register          - Create account [user] [password]',
             '  login             - Login to account [user] [password]',
-            '  exit --account    - Logout from system',
+            '  exit -a           - Logout from account and return to guest',
             '  ls                - List files in current directory',
             '  cd [dir]          - Change directory',
             '  cat [file]        - Read file content',
-            '  apt install [pkg] - Install packages (cmatrix, neofetch)',
+            '  apt install [pkg] - Install packages (cmatrix, neofetch, opsec)',
             '  sudo [command]    - Run command with root privileges'
         ];
     },
@@ -183,7 +190,7 @@ export const commands = {
         const currentUser = getCurrentUser();
         if (currentUser === 'guest') return 'You are not logged in.';
 
-        if (args.includes('--account')) {
+        if (args.includes('-a')) {
             fetch('/api/logout/', {
                 method: 'POST',
                 headers: { 'X-CSRFToken': getCookie('csrftoken') }
@@ -197,7 +204,7 @@ export const commands = {
             });
             return 'Logging out...';
         }
-        return 'Usage: exit --account';
+        return 'Usage: exit -a';
     },
 
     ls: function() {
@@ -356,6 +363,7 @@ function startCMatrix(terminal) {
     const exit = (e) => {
         if (e.key === 'F11') return;
         if (e.key !== 'Escape') return; 
+        
 
         e.preventDefault();
         e.stopPropagation();
@@ -370,6 +378,6 @@ function startCMatrix(terminal) {
             setTimeout(() => inputEl.focus(), 50);
         }
     };
-    
+
     setTimeout(() => window.addEventListener('keyup', exit), 100);
 }
