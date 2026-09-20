@@ -112,7 +112,3 @@ def install_package(request):
 
 def home(request):
     return render(request, 'index.html')
-
-
-def about(request):
-    return render(request, 'about.html')

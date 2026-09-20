@@ -5,7 +5,6 @@ from .views import register_user, get_user_info
 urlpatterns = [
     path('', views.home, name='home'),
     path('index/', views.home, name='index'),
-    path('about/', views.about, name='about'),
     # API endpoints
     path('api/register/', register_user, name='register'),
     path('api/user-info/', get_user_info, name='user_info'),

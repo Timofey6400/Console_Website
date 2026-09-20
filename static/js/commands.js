@@ -1,5 +1,6 @@
 import { getCookie, getCurrentUser } from './utils.js';
 
+// Пакеты, доступные для установки через apt
 const packageRepository = {
     opsec: {
         description: 'Simulate operational security checks',
@@ -31,20 +32,31 @@ const packageRepository = {
     }
 };
 
+const ABOUT_TEXT = [
+    "Console Website v1.5",
+    "--------------------------------------------------",
+    "An interactive web terminal application built with Django & JavaScript.",
+    "Features: PostgreSQL integration, custom package support, tab completion.",
+    "Type 'help' to see available commands."
+];
+
+// Виртуальная файловая система
 const fileSystem = {
     '~': {
-        'about.txt': 'Console Website v1.5. Developed with Django and JS.',
-        'contacts.txt': 'Email: clashingtimarcoc@gmail.com\nGitHub: https://github.com/Timofey6400',
+        'about.txt': ABOUT_TEXT,
+        'contacts.txt': [
+            "Email: admin@console-website.local",
+            "GitHub: github.com/user"
+        ],
         'projects': {
-            'terminal.js': '// Main terminal logic\nconsole.log("System active.");',
-            'api.py': '# Django Rest API\nprint("Backend running")'
+            'readme.md': 'Projects directory'
         }
     }
 };
 
 let currentDirectory = '~';
 
-// !!!
+// Множество установленных пользователем пакетов
 export const installedPackages = new Set();
 
 function getDir(path) {
@@ -54,6 +66,7 @@ function getDir(path) {
     let current = fileSystem['~'];
     
     for (let i = 1; i < parts.length; i++) {
+        if (!parts[i]) continue;
         if (current[parts[i]] && typeof current[parts[i]] === 'object') {
             current = current[parts[i]];
         } else {
@@ -70,7 +83,7 @@ export function runInstalledPackage(pkgName, terminal) {
     return `E: Package ${pkgName} is corrupted.`;
 }
 
-// Downloading packages from Django Backend
+// Загрузка пакетов из Django Backend
 export function loadUserPackages(terminal) {
     const currentUser = getCurrentUser();
     if (currentUser === 'guest') {
@@ -92,12 +105,13 @@ export function loadUserPackages(terminal) {
         .catch(() => console.log('Error synchronizing packages with Django.'));
 }
 
+// Единственный экспорт объекта команд
 export const commands = {
     help: function() {
         return [
             'AVAILABLE COMMANDS:',
             '  help              - Show this message',
-            '  about             - Info about site',
+            '  about             - Show information about project',
             '  date              - Current time',
             '  clear             - Clear terminal screen',
             '  whoami            - Show current user',
@@ -113,7 +127,7 @@ export const commands = {
     },
 
     about: function() {
-        return 'Console Website v1.5. Built with Django + JS Modules.';
+        return ABOUT_TEXT;
     },
 
     date: function() {
@@ -210,11 +224,11 @@ export const commands = {
     ls: function() {
         let dir = getDir(currentDirectory);
         return Object.keys(dir).map(item => 
-            typeof dir[item] === 'object' ? `\x1b[1;34m${item}/\x1b[0m` : item
+            typeof dir[item] === 'object' ? `${item}/` : item
         ).join('   ');
     },
 
-cd: function(args, terminal) {
+    cd: function(args, terminal) {
         const target = args[0];
         
         if (!target || target === '~' || target === '/') {
@@ -363,7 +377,6 @@ function startCMatrix(terminal) {
     const exit = (e) => {
         if (e.key === 'F11') return;
         if (e.key !== 'Escape') return; 
-        
 
         e.preventDefault();
         e.stopPropagation();

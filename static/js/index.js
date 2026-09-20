@@ -14,10 +14,10 @@ document.addEventListener('DOMContentLoaded', function () {
         addLine: addLine,
         updatePromptName: updatePromptName,
         clearOutput: () => { consoleOutput.innerHTML = ''; },
-            updatePromptPath: (path) => {
-        const pathLabels = document.querySelectorAll('.console-path');
-        pathLabels.forEach(el => el.textContent = path);
-    }
+        updatePromptPath: (path) => {
+            const pathLabels = document.querySelectorAll('.console-path');
+            pathLabels.forEach(el => el.textContent = path);
+        }
     };
 
     function updatePromptName(name) {
@@ -88,12 +88,44 @@ document.addEventListener('DOMContentLoaded', function () {
         executeCommandLogic(commandName, args);
     }
 
+    function handleTabCompletion() {
+        const currentInput = consoleInput.value;
+        const trimmedInput = currentInput.trimStart();
+
+        if (!trimmedInput) return;
+
+        // Собираем все доступные команды: базовые + установленные пакеты из Postgres (Set -> Array)
+        const allCommands = [
+            ...Object.keys(commands),
+            ...Array.from(installedPackages)
+        ];
+
+        // Фильтруем совпадения
+        const matches = allCommands.filter(cmd => cmd.startsWith(trimmedInput.toLowerCase()));
+
+        if (matches.length === 1) {
+            // Если совпадение одно — дополняем строку и ставим пробел
+            consoleInput.value = matches[0] + ' ';
+        } else if (matches.length > 1) {
+            // Если вариантов несколько — выводим prompt и список под ним
+            const currentUser = getCurrentUser();
+            addLine(currentUser + '@console-website:~$ ' + currentInput, 'prompt-echo');
+            addLine(matches.join('   '), 'info');
+        }
+    }
+
     window.addEventListener('executeSubCommand', function(e) {
         const { command, args } = e.detail;
         executeCommandLogic(command, args);
     });
 
     consoleInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Tab') {
+            e.preventDefault(); // Предотвращаем переключение фокуса с поля ввода
+            handleTabCompletion();
+            return;
+        }
+
         if (e.key === 'Enter') {
             const value = consoleInput.value;
             consoleInput.value = '';
