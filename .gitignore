@@ -11,3 +11,11 @@ media/
 
 .vscode/
 
+db.sqlite3
+
+*.log
+
+*.swp
+
+.DS_Store
+
